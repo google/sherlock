@@ -1,5 +1,5 @@
 adbutils==2.7.2
 loguru==0.7.0
-setuptools==58.0.4
+setuptools==70.0.0
 tldextract==5.1.2
 perfetto==0.7.0
