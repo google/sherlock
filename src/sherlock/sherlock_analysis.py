@@ -27,25 +27,10 @@ The results of the analysis are saved in a JSON file with the following name:
 
 import collections
 import logging
-import json
 import os
-from dataclasses import asdict
 
 from sherlock import sherlock_config
 from sherlock import trace_analysis
-from sherlock.analysis import analysis_url
-
-
-TRACE_ANALYSIS_MODE_TO_MODULE: dict[trace_analysis.TraceAnalysisMode, list[trace_analysis.TraceAnalysisModule]] = {
-    trace_analysis.TraceAnalysisMode.ANALYSIS_ALL: [analysis_url.TraceAnalysisModuleUrl,],
-    trace_analysis.TraceAnalysisMode.ANALYSIS_URL: [analysis_url.TraceAnalysisModuleUrl,],
-}
-
-
-class TraceAnalysisEncoder(json.JSONEncoder):
-    """A custom JSON encoder, may be useful for further analysis modules."""
-    def default(self, o):
-        return super().default(o)
 
 
 class TraceAnalysis:
@@ -53,13 +38,13 @@ class TraceAnalysis:
 
     Attributes:
         sherlock_config (sherlock_config.SherlockConfig):  Sherlock configuration settings
-        analysis (list[trace_analysis.TraceAnalysisMode]): List of analysis modules to run
+        analysis_module_classes (list[trace_analysis.TraceAnalysisMode]): List of analysis modules to run
     """
     def __init__(self,
                  config: sherlock_config.SherlockConfig,
-                 analysis: list[trace_analysis.TraceAnalysisMode]):
+                 analysis_module_classes: list[trace_analysis.TraceAnalysisModule]):
         self.sherlock_config = config
-        self.analysis: list[trace_analysis.TraceAnalysisMode] = analysis
+        self.analysis_module_classes: list[trace_analysis.TraceAnalysisModule] = analysis_module_classes
 
     def _local_trace_filepath(self) -> dict[str, list[str]]:
         """Get the trace files found locally.
@@ -96,8 +81,6 @@ class TraceAnalysis:
         Args:
             filter_by_serials (list[str], optional): List of serial numbers to filter the traces. Defaults to [].
         """
-        if trace_analysis.TraceAnalysisMode.ANALYSIS_ALL in self.analysis:
-            self.analysis = [trace_analysis.TraceAnalysisMode.ANALYSIS_ALL,]
         trace_filepath_by_serial = self._local_trace_filepath()
         if filter_by_serials:
             trace_filepath_by_serial = {serial: trace_filepath_by_serial[serial] for serial in filter_by_serials if
@@ -106,14 +89,10 @@ class TraceAnalysis:
             logging.debug('serial: %s', serial)
             for trace_filepath in trace_filepath_by_serial[serial]:
                 logging.debug('trace filepath: %s', trace_filepath)
-                for analysis_mode in self.analysis:
-                    for module in TRACE_ANALYSIS_MODE_TO_MODULE[analysis_mode]:
-                        analysis_module= module()
-                        logging.debug('module: %s', analysis_module.module_name)
-                        analysis_module_result = analysis_module.run(trace_filepath)
-                        basename_fullpath, _ = os.path.splitext(trace_filepath)
-                        report_filepath = f'{basename_fullpath}-{analysis_module.module_name}-report.json'
-                        with open(report_filepath, 'w') as json_report:
-                            json.dump(analysis_module_result.to_dict(), json_report, cls=TraceAnalysisEncoder, indent=4)
-                            logging.info('%s report analysis for %s saved in %s', analysis_module.module_name,
-                                         trace_filepath, report_filepath)
+                for analysis_module_class in self.analysis_module_classes:
+                    analysis_module = analysis_module_class()
+                    logging.debug('module: %s', analysis_module.module_name)
+                    analysis_module_result = analysis_module.run(trace_filepath)
+                    basename_fullpath, _ = os.path.splitext(trace_filepath)
+                    report_filepath = f'{basename_fullpath}-{analysis_module.module_name}-report.json'
+                    analysis_module.write_json_results(report_filepath, analysis_module_result)

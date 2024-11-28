@@ -14,6 +14,7 @@
 
 """This module is responsible for extracting the URL visited from a trace."""
 
+import json
 import logging
 from typing import Generator
 
@@ -40,12 +41,16 @@ class TraceAnalysisModuleUrl(trace_analysis.TraceAnalysisModule):
     """Extracts URL visited from a trace.
 
     Attributes:
-        module_name (str): The name of the module.
+        module_name(str): The name of the analysis module.
+        trace_filepath (str): The path of the trace file analysed by this module.
     """
 
-    def __init__(self, module_name: str = 'CHROME_URL'):
+    MODULE_NAME = 'ANALYSIS_URL'
+
+    def __init__(self):
         super().__init__()
-        self.module_name = module_name
+        self.module_name = TraceAnalysisModuleUrl.MODULE_NAME
+        self.trace_filepath = ''
 
     def run(self, trace_filepath: str) -> trace_analysis.TraceAnalysisModuleResult:
         """Run the module on the trace.
@@ -57,13 +62,24 @@ class TraceAnalysisModuleUrl(trace_analysis.TraceAnalysisModule):
             trace_analysis.TraceAnalysisModuleResult: The result of the module.
         """
         logging.info('Running %s module on trace %s', self.module_name, trace_filepath)
-
+        self.trace_filepath = trace_filepath
         results = {}
         for url_id, url in _extract_url_information(TraceProcessor(trace=trace_filepath)):
             results[url_id] = {'url': url}
-
         return trace_analysis.TraceAnalysisModuleResult(
             module_name=self.module_name,
             trace_filepath=trace_filepath,
             results=results
         )
+
+    def write_json_results(self, report_filepath: str, results: trace_analysis.TraceAnalysisModuleResult):
+        """Write the analysis results to a JSON file.
+
+        Args:
+            report_filepath (str): The path to the JSON report file.
+            results (trace_analysis.TraceAnalysisModuleResult): The analysis results object.
+        """
+        with open(report_filepath, 'w') as json_report:
+            json.dump(results.to_dict(), json_report, indent=4)
+            logging.info('%s report analysis for %s saved in %s', self.module_name,
+                         self.trace_filepath, report_filepath)

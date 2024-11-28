@@ -14,13 +14,6 @@
 
 import abc
 import dataclasses
-import enum
-
-
-@enum.unique
-class TraceAnalysisMode(enum.Enum):
-    ANALYSIS_ALL = enum.auto()
-    ANALYSIS_URL = enum.auto()
 
 
 @dataclasses.dataclass
@@ -49,10 +42,16 @@ class TraceAnalysisModule(abc.ABC):
     """Abstract class representing a trace analysis module.
 
     Attributes:
-        module_name: the name of the analysis module
+        module_name: the name of the analysis module.
+        trace_filepath: the path of the trace file analysed by this module.
     """
     module_name: str
+    trace_filepath: str
 
     @abc.abstractmethod
     def run(self, trace_filepath: str) -> TraceAnalysisModuleResult:
         """Run the analysis against the trace specified by `trace_filepath`."""
+
+    @abc.abstractmethod
+    def write_json_results(self, report_filepath: str, results: TraceAnalysisModuleResult):
+        """Write the results to a `report_filepath` JSON file."""
