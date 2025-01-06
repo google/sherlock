@@ -13,14 +13,14 @@
 # limitations under the License.
 
 buffers: {
-    size_kb: 63488
-    fill_policy: RING_BUFFER
+  size_kb: 63488
+  fill_policy: RING_BUFFER
 }
 data_sources: {
-    config {
-        name: "dev.v8.code"
-        target_buffer: 0
-    }
+  config {
+    name: "dev.v8.code"
+    target_buffer: 0
+  }
 }
 # 12 hour trace
 duration_ms: 43200000
