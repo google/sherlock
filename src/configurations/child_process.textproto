@@ -1,0 +1,58 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+buffers: {
+    size_kb: 63488
+    fill_policy: RING_BUFFER
+}
+
+data_sources: {
+    config {
+        name: "linux.process_stats"
+        target_buffer: 0
+        process_stats_config {
+            proc_stats_poll_ms: 500
+        }
+    }
+}
+
+data_sources: {
+	config {
+		name: "linux.ftrace"
+		target_buffer: 0
+		ftrace_config: {
+			compact_sched: {
+				enabled: true
+		}
+		buffer_size_kb: 16384
+		drain_period_ms: 250
+		ftrace_events: "sched/sched_process_exec"
+		ftrace_events: "sched/sched_process_exit"
+		ftrace_events: "sched/sched_process_fork"
+		ftrace_events: "sched/sched_process_free"
+		ftrace_events: "sched/sched_process_hang"
+		ftrace_events: "sched/sched_process_wait"
+		ftrace_events: "task/task_newtask"
+		ftrace_events: "task/task_rename"
+		}
+	}
+}
+
+# 12 hours trace
+duration_ms: 43200000
+write_into_file: true
+file_write_period_ms: 2500
+# 1 gigabyte maximum file size
+max_file_size_bytes: 1073741824
+flush_period_ms: 20000
