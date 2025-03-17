@@ -84,14 +84,14 @@ def _handle_trace_analysis(
       module_classes (list[trace_analysis.TraceAnalysisModule]): List of
         selected module classes.
   """
-  trace_analysis = sherlock_analysis.TraceAnalysis(
+  analysis_control = sherlock_analysis.TraceAnalysis(
       config=sherlock_config.SherlockConfig(
           local_output_dir=args.traces_directory, trace_config_file_path=''
       ),
       analysis_module_classes=module_classes,
   )
   logging.info('Start analysing trace files')
-  trace_analysis.run_analysis(filter_by_serials=args.serial)
+  analysis_control.run_analysis(filter_by_serials=args.serial)
 
 
 def _device_manager_mode_type(
@@ -111,10 +111,10 @@ def _device_manager_mode_type(
   """
   try:
     return device_manager.DeviceManagerMode[mode_string]
-  except KeyError:
+  except KeyError as ex:
     raise argparse.ArgumentTypeError(
         f'Invalid DeviceManagerMode value: {mode_string}'
-    )
+    ) from ex
 
 
 def _import_available_modules(
